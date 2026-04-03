@@ -241,6 +241,7 @@ const Game = (() => {
     invincible: 0,
     dieTimer: 0,
     dead: false,
+    jumpsLeft: 2,
 
     // Power-up
     powerup: null,    // null | 'super' | 'speed' | 'storm'
@@ -281,6 +282,7 @@ const Game = (() => {
       this.invincible = 0;
       this.dieTimer = 0;
       this.dead = false;
+      this.jumpsLeft = 2;
       this.powerup = null;
       this.powerupTimer = 0;
       this.time = 0;
@@ -385,11 +387,26 @@ const Game = (() => {
         if (this.pvx < 0) { this.pvx += friction * dt; if (this.pvx > 0) this.pvx = 0; }
       }
 
-      // Jump
-      if (Engine.inputJumpPressed() && this.onGround) {
-        this.pvy = -520;
+      // Jump (double jump enabled)
+      if (Engine.inputJumpPressed() && this.jumpsLeft > 0) {
+        this.pvy = this.onGround ? -560 : -480;
+        this.jumpsLeft--;
         this.onGround = false;
         Engine.sfxJump();
+        // Double jump particles
+        if (this.jumpsLeft === 0) {
+          for (let i = 0; i < 6; i++) {
+            this.particles.push({
+              x: this.px + (Math.random() - 0.5) * 10,
+              y: this.py,
+              vx: (Math.random() - 0.5) * 80,
+              vy: Math.random() * 60 + 20,
+              life: 0.4, type: 'djump',
+              size: 2 + Math.random() * 3,
+              color: '#a29bfe',
+            });
+          }
+        }
       }
 
       // Smash (shoot shuttlecock)
@@ -426,6 +443,9 @@ const Game = (() => {
       this.py += this.pvy * dt;
       this.onGround = false;
       this.resolveCollisionsY();
+
+      // Reset double jump on landing
+      if (this.onGround) this.jumpsLeft = 2;
 
       // Fall off world
       if (this.py > this.level.h * T + 100) {
