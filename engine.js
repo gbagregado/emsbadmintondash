@@ -198,13 +198,12 @@ const Engine = (() => {
     window.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
     window.addEventListener('keyup', e => { keys[e.code] = false; e.preventDefault(); });
 
-    // Mobile controls
+    // Mobile controls with multitouch
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       document.getElementById('mobile-controls').style.display = 'block';
-      setupMobileBtn('btn-left', v => touchLeft = v);
-      setupMobileBtn('btn-right', v => touchRight = v);
-      setupMobileBtn('btn-jump', v => touchJump = v);
-      setupMobileBtn('btn-smash', v => touchSmash = v);
+      const hint = document.getElementById('swipe-hint');
+      if (hint) hint.style.display = 'block';
+      setupMultitouch();
     }
 
     // Prevent context menu
@@ -214,11 +213,109 @@ const Engine = (() => {
     requestAnimationFrame(loop);
   }
 
-  function setupMobileBtn(id, setter) {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', e => { e.preventDefault(); setter(true); }, { passive: false });
-    el.addEventListener('touchend', e => { e.preventDefault(); setter(false); }, { passive: false });
-    el.addEventListener('touchcancel', e => { setter(false); });
+  // ── Multitouch system ──
+  // Track each active touch and what it's doing
+  const activeTouches = {};  // touchId -> { startX, startY, startTime, btn }
+  const SWIPE_THRESHOLD = 30; // px to trigger swipe-up jump
+
+  function setupMultitouch() {
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
+    const btnSmash = document.getElementById('btn-smash');
+
+    // Button touches — track per-touch so multitouch works
+    function setupBtn(el, flag) {
+      el.addEventListener('touchstart', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        for (const t of e.changedTouches) {
+          activeTouches[t.identifier] = { btn: flag };
+        }
+        updateBtnState();
+      }, { passive: false });
+
+      el.addEventListener('touchend', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        for (const t of e.changedTouches) {
+          delete activeTouches[t.identifier];
+        }
+        updateBtnState();
+      }, { passive: false });
+
+      el.addEventListener('touchcancel', e => {
+        for (const t of e.changedTouches) {
+          delete activeTouches[t.identifier];
+        }
+        updateBtnState();
+      });
+    }
+
+    setupBtn(btnLeft, 'left');
+    setupBtn(btnRight, 'right');
+    setupBtn(btnSmash, 'smash');
+
+    function updateBtnState() {
+      touchLeft = false;
+      touchRight = false;
+      touchSmash = false;
+      // touchJump is set by swipe, cleared by frame
+      for (const id in activeTouches) {
+        const t = activeTouches[id];
+        if (t.btn === 'left') touchLeft = true;
+        if (t.btn === 'right') touchRight = true;
+        if (t.btn === 'smash') touchSmash = true;
+      }
+    }
+
+    // Swipe-up to jump — listen on the whole document
+    document.addEventListener('touchstart', e => {
+      for (const t of e.changedTouches) {
+        if (!activeTouches[t.identifier]) {
+          activeTouches[t.identifier] = {
+            startX: t.clientX, startY: t.clientY,
+            startTime: performance.now(), btn: 'swipe',
+          };
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      for (const t of e.changedTouches) {
+        const info = activeTouches[t.identifier];
+        if (info && info.btn === 'swipe') {
+          const dy = info.startY - t.clientY; // positive = swipe up
+          if (dy > SWIPE_THRESHOLD) {
+            touchJump = true;
+            info.jumped = true;
+          }
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+      for (const t of e.changedTouches) {
+        const info = activeTouches[t.identifier];
+        if (info && info.btn === 'swipe') {
+          // Quick tap on screen (not on a button) = also jump
+          const dt = performance.now() - info.startTime;
+          const dy = info.startY - t.clientY;
+          if (!info.jumped && dt < 250 && Math.abs(dy) < SWIPE_THRESHOLD) {
+            // Tap on upper half of screen = jump
+            if (t.clientY < window.innerHeight * 0.6) {
+              touchJump = true;
+            }
+          }
+          delete activeTouches[t.identifier];
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchcancel', e => {
+      for (const t of e.changedTouches) {
+        delete activeTouches[t.identifier];
+      }
+    });
   }
 
   function resize() {
@@ -251,6 +348,9 @@ const Engine = (() => {
     if (gameState && !paused) {
       if (gameState.update) gameState.update(dt);
     }
+
+    // Clear one-shot touch inputs after update consumes them
+    touchJump = false;
 
     ctx.save();
     ctx.setTransform(scale, 0, 0, scale, 0, 0);

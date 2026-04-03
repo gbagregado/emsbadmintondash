@@ -22,16 +22,20 @@
       pointer-events: auto; z-index: 20; display: none;
     }
     .ctrl-btn {
-      position: absolute; width: 60px; height: 60px; border-radius: 50%;
+      position: absolute; width: 70px; height: 70px; border-radius: 50%;
       background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
-      color: #fff; font-size: 24px; display: flex; align-items: center;
+      color: #fff; font-size: 26px; display: flex; align-items: center;
       justify-content: center; user-select: none; -webkit-user-select: none;
     }
     .ctrl-btn:active { background: rgba(255,255,255,0.4); }
-    #btn-left { bottom: 20px; left: 20px; }
-    #btn-right { bottom: 20px; left: 100px; }
-    #btn-jump { bottom: 20px; right: 20px; }
-    #btn-smash { bottom: 20px; right: 100px; }
+    #btn-left { bottom: 15px; left: 15px; }
+    #btn-right { bottom: 15px; left: 105px; }
+    #btn-smash { bottom: 15px; right: 15px; width: 80px; height: 80px; font-size: 30px; }
+    #swipe-hint {
+      position: fixed; bottom: 105px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.4); font-size: 13px; font-family: -apple-system, sans-serif;
+      pointer-events: none; z-index: 21; display: none;
+    }
   </style>
 </head>
 <body>
@@ -39,9 +43,9 @@
   <div id="mobile-controls">
     <div class="ctrl-btn" id="btn-left">◀</div>
     <div class="ctrl-btn" id="btn-right">▶</div>
-    <div class="ctrl-btn" id="btn-jump">↑</div>
     <div class="ctrl-btn" id="btn-smash">🏸</div>
   </div>
+  <div id="swipe-hint">↑ Swipe up to jump</div>
   <script src="./engine.js"></script>
   <script src="./graphics.js"></script>
   <script src="./levels.js"></script>

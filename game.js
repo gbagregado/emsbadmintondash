@@ -100,7 +100,7 @@ const Game = (() => {
       // Controls hint
       ctx.fillStyle = '#636e72';
       ctx.font = '12px -apple-system, sans-serif';
-      ctx.fillText('← → Move  |  ↑/Space Jump  |  Z/X/Shift Smash', W / 2, H - 45);
+      ctx.fillText('← → Move  |  ↑/Space/Swipe Up Jump  |  Z/X/Shift/🏸 Smash', W / 2, H - 45);
 
       // Sound toggle
       ctx.font = '18px sans-serif';
