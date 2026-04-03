@@ -137,6 +137,28 @@ const GFX = (() => {
       ctx.fillRect(3, -15 + bob + jumpStretch, 1, 1);
     }
 
+    // Glasses
+    ctx.strokeStyle = '#4a3728';
+    ctx.lineWidth = 1.2;
+    // Left lens
+    ctx.strokeRect(-7, -17 + bob + jumpStretch, 7, 6);
+    // Right lens
+    ctx.strokeRect(0, -17 + bob + jumpStretch, 7, 6);
+    // Bridge
+    ctx.beginPath();
+    ctx.moveTo(0, -14 + bob + jumpStretch);
+    ctx.lineTo(0, -14 + bob + jumpStretch);
+    ctx.stroke();
+    // Temples (arms of glasses)
+    ctx.beginPath();
+    ctx.moveTo(-7, -15 + bob + jumpStretch);
+    ctx.lineTo(-10, -15 + bob + jumpStretch);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(7, -15 + bob + jumpStretch);
+    ctx.lineTo(10, -15 + bob + jumpStretch);
+    ctx.stroke();
+
     // Mouth
     if (state === 'smash') {
       ctx.fillStyle = '#e17055';
@@ -545,8 +567,172 @@ const GFX = (() => {
     ctx.restore();
   }
 
+  // ── Cho (male character) ──
+  function drawCho(ctx, x, y, facing, anim, state, smashFrame) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(facing, 1);
+
+    const bob = state === 'run' ? Math.sin(anim * 12) * 2 : 0;
+    const jumpStretch = state === 'jump' ? -2 : 0;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    const legAnim = state === 'run' ? Math.sin(anim * 12) * 8 : 0;
+    ctx.fillStyle = '#2d3436';  // dark pants
+    ctx.save();
+    ctx.translate(-3, 4 + bob);
+    ctx.rotate(legAnim * Math.PI / 180);
+    ctx.fillRect(-2, 0, 5, 12);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(3, 4 + bob);
+    ctx.rotate(-legAnim * Math.PI / 180);
+    ctx.fillRect(-2, 0, 5, 12);
+    ctx.restore();
+
+    // Shoes
+    ctx.fillStyle = '#0984e3';
+    ctx.fillRect(-8, 15 + bob, 6, 3);
+    ctx.fillRect(2, 15 + bob, 6, 3);
+
+    // Body (blue athletic shirt)
+    ctx.fillStyle = '#0984e3';
+    ctx.fillRect(-8, -8 + bob + jumpStretch, 16, 14);
+    // Shirt stripe
+    ctx.fillStyle = '#74b9ff';
+    ctx.fillRect(-8, -2 + bob + jumpStretch, 16, 3);
+
+    // Arms
+    const armAngle = state === 'smash' ? (-60 + smashFrame * 30) : (state === 'run' ? Math.sin(anim * 12) * 20 : 0);
+
+    // Left arm
+    ctx.save();
+    ctx.translate(-8, -4 + bob);
+    ctx.rotate((state === 'run' ? -legAnim : 0) * Math.PI / 180);
+    ctx.fillStyle = '#f8c291';
+    ctx.fillRect(-5, 0, 5, 10);
+    ctx.restore();
+
+    // Right arm (racket arm)
+    ctx.save();
+    ctx.translate(8, -4 + bob);
+    ctx.rotate(armAngle * Math.PI / 180);
+    ctx.fillStyle = '#f8c291';
+    ctx.fillRect(0, 0, 5, 10);
+
+    // Racket
+    ctx.strokeStyle = '#e17055';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(2, 10);
+    ctx.lineTo(2, 18);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(225, 112, 85, 0.3)';
+    ctx.strokeStyle = '#e17055';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(2, 24, 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(225, 112, 85, 0.5)';
+    ctx.lineWidth = 0.5;
+    for (let i = -4; i <= 4; i += 2) {
+      ctx.beginPath(); ctx.moveTo(i, 17); ctx.lineTo(i, 31); ctx.stroke();
+    }
+    for (let j = 18; j <= 30; j += 3) {
+      ctx.beginPath(); ctx.moveTo(-5, j); ctx.lineTo(9, j); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Head
+    ctx.fillStyle = '#f8c291';
+    ctx.beginPath();
+    ctx.arc(0, -14 + bob + jumpStretch, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair (short, dark, spiky)
+    ctx.fillStyle = '#2d3436';
+    ctx.beginPath();
+    ctx.arc(0, -16 + bob + jumpStretch, 10, -Math.PI, 0);
+    ctx.fill();
+    // Spiky top
+    for (let s = -6; s <= 6; s += 4) {
+      ctx.beginPath();
+      ctx.moveTo(s - 2, -23 + bob + jumpStretch);
+      ctx.lineTo(s, -28 + bob + jumpStretch);
+      ctx.lineTo(s + 2, -23 + bob + jumpStretch);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Eyes
+    ctx.fillStyle = '#2d3436';
+    if (state === 'die') {
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#2d3436';
+      [-3, 4].forEach(ex => {
+        ctx.beginPath(); ctx.moveTo(ex - 2, -16 + bob); ctx.lineTo(ex + 2, -12 + bob); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ex + 2, -16 + bob); ctx.lineTo(ex - 2, -12 + bob); ctx.stroke();
+      });
+    } else {
+      ctx.fillRect(-5, -15 + bob + jumpStretch, 3, 3);
+      ctx.fillRect(2, -15 + bob + jumpStretch, 3, 3);
+      // Eye shine
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-4, -15 + bob + jumpStretch, 1, 1);
+      ctx.fillRect(3, -15 + bob + jumpStretch, 1, 1);
+      // Eyebrows (thicker, masculine)
+      ctx.fillStyle = '#2d3436';
+      ctx.fillRect(-6, -18 + bob + jumpStretch, 5, 1.5);
+      ctx.fillRect(1, -18 + bob + jumpStretch, 5, 1.5);
+    }
+
+    // Mouth
+    if (state === 'smash') {
+      ctx.fillStyle = '#e17055';
+      ctx.beginPath();
+      ctx.arc(0, -10 + bob, 3, 0, Math.PI);
+      ctx.fill();
+    } else if (state === 'die') {
+      ctx.strokeStyle = '#2d3436';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, -9 + bob, 2, 0, Math.PI);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#e17055';
+      ctx.fillRect(-2, -10 + bob + jumpStretch, 4, 2);
+    }
+
+    // Headband (red)
+    ctx.fillStyle = '#d63031';
+    ctx.fillRect(-9, -20 + bob + jumpStretch, 18, 3);
+
+    ctx.restore();
+  }
+
+  // ── Universal player draw ──
+  let selectedChar = 'ems';
+  function setCharacter(name) { selectedChar = name; }
+  function getCharacter() { return selectedChar; }
+
+  function drawPlayer(ctx, x, y, facing, anim, state, smashFrame) {
+    if (selectedChar === 'cho') {
+      drawCho(ctx, x, y, facing, anim, state, smashFrame);
+    } else {
+      drawEms(ctx, x, y, facing, anim, state, smashFrame);
+    }
+  }
+
   return {
-    drawEms, drawShuttlecock, drawEnemyShuttle, drawNetEnemy,
+    drawEms, drawCho, drawPlayer, setCharacter, getCharacter,
+    drawShuttlecock, drawEnemyShuttle, drawNetEnemy,
     drawBirdie, drawPowerup,
     drawGround, drawBrick, drawQuestionBlock, drawSpike, drawFlag,
     drawSky, drawParticle, drawHUD,

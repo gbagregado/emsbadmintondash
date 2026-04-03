@@ -35,9 +35,8 @@ const Game = (() => {
           this.bgmStarted = true;
           Engine.bgmTitle();
         } else {
-          Engine.stopBGM();
           Engine.sfxCoin();
-          Engine.setState(PlayScene);
+          Engine.setState(SelectScene);
         }
       }
     },
@@ -74,10 +73,10 @@ const Game = (() => {
       ctx.font = '14px -apple-system, sans-serif';
       ctx.fillText('Smash your way through!', W / 2, 185);
 
-      // Ems character
-      const emsY = H - T - 18;
-      const emsX = W / 2;
-      GFX.drawEms(ctx, emsX, emsY, 1, this.time, 'idle', 0);
+      // Characters preview
+      const charY = H - T - 18;
+      GFX.drawEms(ctx, W / 2 - 50, charY, 1, this.time, 'idle', 0);
+      GFX.drawCho(ctx, W / 2 + 50, charY, -1, this.time, 'idle', 0);
 
       // Floating shuttlecocks
       for (let i = 0; i < 5; i++) {
@@ -106,6 +105,122 @@ const Game = (() => {
       // Sound toggle
       ctx.font = '18px sans-serif';
       ctx.fillText(Engine.soundEnabled ? '🔊' : '🔇', W - 25, 20);
+    },
+  };
+
+  // ══════════════════════════════════════════════
+  // CHARACTER SELECT SCENE
+  // ══════════════════════════════════════════════
+  const SelectScene = {
+    time: 0,
+    selected: 0,  // 0 = ems, 1 = cho
+    confirmed: false,
+
+    enter() {
+      this.time = 0;
+      this.selected = 0;
+      this.confirmed = false;
+    },
+
+    update(dt) {
+      this.time += dt;
+      if (this.confirmed) return;
+
+      if (Engine.inputLeft()) this.selected = 0;
+      if (Engine.inputRight()) this.selected = 1;
+
+      if (Engine.inputJumpPressed() || Engine.inputSmashPressed()) {
+        this.confirmed = true;
+        GFX.setCharacter(this.selected === 0 ? 'ems' : 'cho');
+        Engine.sfxCoin();
+        setTimeout(() => {
+          Engine.stopBGM();
+          Engine.setState(PlayScene);
+        }, 600);
+      }
+    },
+
+    draw(ctx) {
+      // Background
+      GFX.drawSky(ctx, W, H, this.time * 10);
+      for (let x = 0; x < W; x += T) GFX.drawGround(ctx, x, H - T);
+
+      // Header
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      Engine.roundRect(ctx, W / 2 - 150, 30, 300, 50, 12);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 24px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('CHOOSE YOUR PLAYER', W / 2, 55);
+
+      // Ems card
+      const emsX = W / 2 - 110;
+      const choX = W / 2 + 110;
+      const cardY = 120;
+      const cardW = 140;
+      const cardH = 220;
+
+      // Ems selection card
+      ctx.fillStyle = this.selected === 0 ? 'rgba(255,159,243,0.3)' : 'rgba(0,0,0,0.2)';
+      Engine.roundRect(ctx, emsX - cardW/2, cardY, cardW, cardH, 12);
+      ctx.fill();
+      if (this.selected === 0) {
+        ctx.strokeStyle = '#ff9ff3';
+        ctx.lineWidth = 3;
+        Engine.roundRect(ctx, emsX - cardW/2, cardY, cardW, cardH, 12);
+        ctx.stroke();
+      }
+      GFX.drawEms(ctx, emsX, cardY + 110, 1, this.time, 'idle', 0);
+      ctx.fillStyle = this.selected === 0 ? '#ff9ff3' : '#b2bec3';
+      ctx.font = 'bold 20px -apple-system, sans-serif';
+      ctx.fillText('Ems', emsX, cardY + 160);
+      ctx.fillStyle = '#636e72';
+      ctx.font = '12px -apple-system, sans-serif';
+      ctx.fillText('👩 Badminton Queen', emsX, cardY + 185);
+
+      // Cho selection card
+      ctx.fillStyle = this.selected === 1 ? 'rgba(9,132,227,0.3)' : 'rgba(0,0,0,0.2)';
+      Engine.roundRect(ctx, choX - cardW/2, cardY, cardW, cardH, 12);
+      ctx.fill();
+      if (this.selected === 1) {
+        ctx.strokeStyle = '#0984e3';
+        ctx.lineWidth = 3;
+        Engine.roundRect(ctx, choX - cardW/2, cardY, cardW, cardH, 12);
+        ctx.stroke();
+      }
+      GFX.drawCho(ctx, choX, cardY + 110, -1, this.time, 'idle', 0);
+      ctx.fillStyle = this.selected === 1 ? '#0984e3' : '#b2bec3';
+      ctx.font = 'bold 20px -apple-system, sans-serif';
+      ctx.fillText('Cho', choX, cardY + 160);
+      ctx.fillStyle = '#636e72';
+      ctx.font = '12px -apple-system, sans-serif';
+      ctx.fillText('👨 Smash King', choX, cardY + 185);
+
+      // Arrow indicators
+      ctx.fillStyle = '#fdcb6e';
+      ctx.font = 'bold 28px sans-serif';
+      const bounce = Math.sin(this.time * 5) * 3;
+      if (this.selected === 0) {
+        ctx.fillText('▼', emsX, cardY - 10 + bounce);
+      } else {
+        ctx.fillText('▼', choX, cardY - 10 + bounce);
+      }
+
+      // Controls hint
+      const alpha = Math.sin(this.time * 3) * 0.3 + 0.7;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#2d3436';
+      ctx.font = 'bold 16px -apple-system, sans-serif';
+      ctx.fillText('← → Select  |  JUMP or SMASH to Confirm', W / 2, H - 50);
+      ctx.globalAlpha = 1;
+
+      // Confirmed flash
+      if (this.confirmed) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.sin(this.time * 20) * 0.3 + 0.2})`;
+        ctx.fillRect(0, 0, W, H);
+      }
     },
   };
 
@@ -758,7 +873,7 @@ const Game = (() => {
       if (!this.dead || this.dieTimer > 0) {
         const blink = this.invincible > 0 && Math.sin(this.invincible * 20) > 0;
         if (!blink) {
-          GFX.drawEms(ctx, this.px, this.py, this.facing, this.animTime,
+          GFX.drawPlayer(ctx, this.px, this.py, this.facing, this.animTime,
             this.state, this.smashTimer > 0 ? (0.3 - this.smashTimer) * 10 : 0);
         }
       }
@@ -819,8 +934,8 @@ const Game = (() => {
       ctx.fillStyle = '#1a1a2e';
       ctx.fillRect(0, 0, W, H);
 
-      // Sad Ems
-      GFX.drawEms(ctx, W / 2, H / 2 + 40, 1, 0, 'die', 0);
+      // Sad player
+      GFX.drawPlayer(ctx, W / 2, H / 2 + 40, 1, 0, 'die', 0);
 
       ctx.fillStyle = '#ff6b6b';
       ctx.font = 'bold 40px -apple-system, sans-serif';
@@ -874,8 +989,8 @@ const Game = (() => {
         ctx.fillRect(cx, cy, 5, 5);
       }
 
-      // Champion Ems
-      GFX.drawEms(ctx, W / 2, H / 2 + 60, 1, this.time, 'idle', 0);
+      // Champion player
+      GFX.drawPlayer(ctx, W / 2, H / 2 + 60, 1, this.time, 'idle', 0);
 
       // Trophy
       ctx.font = '50px sans-serif';
@@ -893,7 +1008,9 @@ const Game = (() => {
 
       ctx.fillStyle = '#6c5ce7';
       ctx.font = 'bold 22px -apple-system, sans-serif';
-      ctx.fillText("Ems is the Badminton Queen! 👑", W / 2, 150);
+      const charName = GFX.getCharacter() === 'cho' ? 'Cho' : 'Ems';
+      const charTitle = GFX.getCharacter() === 'cho' ? 'the Smash King! 👑' : 'the Badminton Queen! 👑';
+      ctx.fillText(`${charName} is ${charTitle}`, W / 2, 150);
 
       if (this.time > 2) {
         const alpha = Math.sin(this.time * 3) * 0.4 + 0.6;
